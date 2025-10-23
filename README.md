@@ -121,3 +121,89 @@ Once both agents are running, you can interact with the `slide_content_agent`. F
 "Create a slide about the importance of teamwork in a fast-paced environment."
 
 The agent will then generate the text content for the slide and an illustration to go with it.
+
+## Deployment Instructions
+
+### Install ADK and the A2A Python SDK
+
+```bash
+cd ~ 
+export PATH=$PATH:"/home/${USER}/.local/bin"
+python3 -m pip install google-adk==1.8.0 a2a-sdk==0.2.16
+pip install --upgrade google-genai
+# Correcting a typo in this version
+sed -i 's/{a2a_option}"/{a2a_option} "/' ~/.local/lib/python3.12/site-packages/google/adk/cli/cli_deploy.py
+```
+
+### Create `.env` file
+
+Run the following in the Cloud Shell Terminal to write this file in this directory.
+
+```bash
+cd ~/adk_and_a2a
+cat << EOF > illustration_agent/.env
+GOOGLE_GENAI_USE_VERTEXAI=TRUE
+GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-00-811cef6d8c7a
+GOOGLE_CLOUD_LOCATION=global
+MODEL=gemini-2.5-flash
+IMAGE_MODEL=gemini-2.5-flash-image
+EOF
+```
+
+### Deploy the agent as an A2A Server
+
+An A2A Agent identifies itself and its capabilities by serving an Agent Card. Run the following to create an agent.json file.
+
+```bash
+touch illustration_agent/agent.json
+```
+
+Open the `agent.json` file within the `adk_and_a2a/illustration_agent` directory and paste in the following contents:
+
+```json
+{
+    "name": "illustration_agent",
+    "description": "An agent designed to generate branded illustrations for Cymbal Stadiums.",
+    "defaultInputModes": ["text/plain"],
+    "defaultOutputModes": ["application/json"],
+    "skills": [
+    {
+        "id": "illustrate_text",
+        "name": "Illustrate Text",
+        "description": "Generate an illustration to illustrate the meaning of provided text.",
+        "tags": ["illustration", "image generation"]
+    }
+    ],
+    "url": "https://illustration-agent-418088835593.us-east1.run.app/a2a/illustration_agent",
+    "capabilities": {},
+    "version": "1.0.0"
+}
+```
+
+### Create `requirements.txt`
+
+Create a `requirements.txt` file in the `illustration_agent` directory.
+
+```bash
+touch illustration_agent/requirements.txt
+```
+
+Select the file, and paste the following into the file.
+
+```
+google-adk==1.8.0
+a2a-sdk==0.2.16
+```
+
+### Deploy to Cloud Run
+
+Deploy the agent to Cloud Run as an A2A server with the following command:
+
+```bash
+adk deploy cloud_run \
+    --project qwiklabs-gcp-00-811cef6d8c7a \
+    --region us-east1 \
+    --service_name illustration-agent \
+    --a2a \
+    illustration_agent
+```
